@@ -17,7 +17,7 @@ import warnings
 import gc
 import copy
 
-import noise_addition_utils #only using the save audio function, possibly can be removed
+import utils
 
 from metrics import AudioMetrics
 from metrics import AudioMetrics2
@@ -341,7 +341,7 @@ plt.plot(x_c_np)
 
 """#### Save Recently Denoised Speech Files ####"""
 
-noise_addition_utils.save_audio_file(np_array=x_est_np,file_path=Path("/content/denoised16khz.wav"), sample_rate=16000, bit_precision=16)
-noise_addition_utils.save_audio_file(np_array=x_c_np,file_path=Path("/content/clean.wav"), sample_rate=SAMPLE_RATE, bit_precision=16)
-noise_addition_utils.save_audio_file(np_array=x_n_np,file_path=Path("/content/noisy.wav"), sample_rate=SAMPLE_RATE, bit_precision=16)
+utils.save_audio_file(np_array=x_est_np,file_path=Path("/content/denoised16khz.wav"), sample_rate=16000, bit_precision=16)
+utils.save_audio_file(np_array=x_c_np,file_path=Path("/content/clean.wav"), sample_rate=SAMPLE_RATE, bit_precision=16)
+utils.save_audio_file(np_array=x_n_np,file_path=Path("/content/noisy.wav"), sample_rate=SAMPLE_RATE, bit_precision=16)
 
