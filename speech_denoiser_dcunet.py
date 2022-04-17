@@ -295,7 +295,7 @@ from pathlib import Path
 test_noisy_files = sorted(list(Path("/content/wav16k/min/cv/mix_single_reverb").rglob('*.wav')))
 test_clean_files = sorted(list(Path("/content/wav16k/min/cv/s1_anechoic").rglob('*.wav')))
 
-test_dataset = dataset.SpeechDataset(test_noisy_files, test_clean_files, N_FFT, HOP_LENGTH)
+test_dataset = dataset.SpeechDataset(test_noisy_files, test_clean_files, N_FFT, HOP_LENGTH, task="upsample")
 
 # For testing purpose
 test_loader_single_unshuffled = DataLoader(test_dataset, batch_size=1, shuffle=False)

@@ -11,7 +11,7 @@ class SpeechDataset(Dataset):
     A dataset class with audio that cuts them/paddes them to a specified length, applies a Short-tome Fourier transform,
     normalizes and leads to a tensor.
     """
-    def __init__(self, noisy_files, clean_files, n_fft=64, hop_length=16):
+    def __init__(self, noisy_files, clean_files, n_fft=64, hop_length=16, task="enhancement"):
         super().__init__()
         # list of files
         self.noisy_files = sorted(noisy_files)
@@ -25,6 +25,8 @@ class SpeechDataset(Dataset):
         
         # fixed len
         self.max_len = 165000
+        
+        self.task = task
 
     
     def __len__(self):
@@ -42,6 +44,13 @@ class SpeechDataset(Dataset):
         # padding/cutting
         x_clean = self._prepare_sample(x_clean)
         x_noisy = self._prepare_sample(x_noisy)
+        
+        if self.task == "upsample":
+            x_noisy = signal.resample(x_noisy, int(x_noisy.shape[0]/16000*8000))
+        elif self.task == "denoise":
+            pass
+        elif self.task == "fif":
+            pass
         
         # Short-time Fourier transform
         x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, 
