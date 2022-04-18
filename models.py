@@ -4,6 +4,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 
+SAMPLE_RATE = 16000
+N_FFT = (SAMPLE_RATE * 64) // 1000 
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
+
 """### Declaring the class layers ###"""
 
 class CConv2d(nn.Module):
@@ -256,9 +260,10 @@ class DCUnetA2A(nn.Module):
         output = p
         output = torch.squeeze(output, 1)
 
+        print(f"istft parameters: {self.n_fft}, {self.hop_length}")
 
         if is_istft:
-            output = torch.istft(output, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
+            output = torch.istft(output, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
         
         return output
 
@@ -378,3 +383,5 @@ class DCUnetA2A(nn.Module):
                                        (0,0)]
         else:
             raise ValueError("Unknown model depth : {}".format(model_depth))
+
+

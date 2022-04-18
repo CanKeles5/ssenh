@@ -1,10 +1,14 @@
 #Dataset
 
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader
 import torchaudio
 import torch
 import numpy as np
+import glob
 
+SAMPLE_RATE = 16000
+N_FFT = (SAMPLE_RATE * 64) // 1000 
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
 
 class SpeechDataset(Dataset):
     """
@@ -18,8 +22,8 @@ class SpeechDataset(Dataset):
         self.clean_files = sorted(clean_files)
         
         # stft parameters
-        self.n_fft = n_fft
-        self.hop_length = hop_length
+        self.n_fft = N_FFT
+        self.hop_length = HOP_LENGTH
         
         self.len_ = len(self.noisy_files)
         
@@ -45,12 +49,14 @@ class SpeechDataset(Dataset):
         x_clean = self._prepare_sample(x_clean)
         x_noisy = self._prepare_sample(x_noisy)
         
+        """
         if self.task == "upsample":
-            x_noisy = signal.resample(x_noisy, int(x_noisy.shape[0]/16000*8000))
+            pass
         elif self.task == "denoise":
             pass
         elif self.task == "fif":
             pass
+        """
         
         # Short-time Fourier transform
         x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, 
@@ -71,4 +77,18 @@ class SpeechDataset(Dataset):
         return output
 
 
+def create_dataloader(input_folder, target_folder):
+    INPUT_PATHS = glob.glob(input_folder + "\*.wav")
+    TARGET_PATHS = glob.glob(target_folder + "\*.wav")
+    
+    input_files = sorted(list(INPUT_PATHS))
+    target_files = sorted(list(TARGET_PATHS))
+    
+    print("No. of Training files: ",len(input_files))
+    
+    dataset = SpeechDataset(input_files, target_files, n_fft=64, hop_length=16)
+    
+    dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
+    
+    return dataloader
 
