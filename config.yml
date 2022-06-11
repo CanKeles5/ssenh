@@ -1,0 +1,17 @@
+#Config file
+
+task: 
+    name: senh #can be: senh, gaussian denoise, sr
+    
+    factor: 2 #factor for senh: gaussian pre training factor
+    
+
+stage: train
+
+save_path : /Desktop/output
+
+sample_rate: 16000
+batch_size: 4
+device: cpu
+
+

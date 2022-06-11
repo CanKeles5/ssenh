@@ -1,0 +1,16 @@
+Functionalities:
+- Train models:
+ -> Supervised
+ -> Gaussian denoising
+ -> Audio super resolution
+
+- Test models
+
+
+#Modular code
+#Specifications must be given in yaml config file
+#TO-DO Figure out if we need the coloured noise utils file, if not remove
+#Go over all the code & remove all unnecessary parts
+#Print/report/log val loss for every epoch, plot at the end if possible
+
+

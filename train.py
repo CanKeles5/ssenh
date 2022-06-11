@@ -2,17 +2,21 @@ from tqdm import tqdm
 import gc
 import torch
 
+import metrics
+
+
 DEVICE = "cpu"
-basepath = r"C:\Users\Can\Desktop\base"
+basepath = r"C:\Users\Can\Desktop\ssenh\white_Noise2Noise"
 #Train
 
 
 def train_epoch(net, train_loader, loss_fn, optimizer):
     net.train()
-    train_ep_loss = 0.
+    train_ep_loss = 0.0
     counter = 0
+    
     for noisy_x, clean_x in train_loader:
-
+        
         if counter % 100 == 0:
           print(f"Processing batch {counter}.")
 
@@ -26,57 +30,60 @@ def train_epoch(net, train_loader, loss_fn, optimizer):
 
         # calculate loss
         loss = loss_fn(noisy_x, pred_x, clean_x)
+        
         loss.backward()
         optimizer.step()
-
+        
         train_ep_loss += loss.item() 
+        
         counter += 1
 
     train_ep_loss /= counter
-
+    
     # clear cache
     gc.collect()
     torch.cuda.empty_cache()
     return train_ep_loss
 
+
 """### Description of the validation of epochs ###"""
 
-def test_epoch(net, test_loader, loss_fn, use_net=True):
+def val_epoch(net, val_loader, loss_fn):
     net.eval()
-    test_ep_loss = 0.
-    counter = 0.
+    val_ep_loss = 0.0
+    counter = 0
     
-    for noisy_x, clean_x in test_loader:
+    for noisy_x, clean_x in val_loader:
         # get the output from the model
         noisy_x, clean_x = noisy_x.to(DEVICE), clean_x.to(DEVICE)
         pred_x = net(noisy_x)
-
+        
         # calculate loss
         loss = loss_fn(noisy_x, pred_x, clean_x)
         # Calc the metrics here
-        test_ep_loss += loss.item() 
+        val_ep_loss += loss.item()
         
         counter += 1
 
-    test_ep_loss /= counter
+    val_ep_loss /= counter
     
-    print("Actual compute done...testing now")
+    #print("Actual compute done...testing now")
     
-    testmet = getMetricsonLoader(test_loader,net,use_net)
+    #testmet = metrics.getMetricsonLoader(test_loader,net,use_net)
 
     # clear cache
     gc.collect()
     torch.cuda.empty_cache()
     
-    return test_ep_loss, testmet
+    return val_ep_loss
 
 """### To understand whether the network is being trained or not, we will output a train and test loss. ###"""
 
-def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs):
+def train(net, train_loader, val_loader, loss_fn, optimizer, scheduler, epochs):
     
     train_losses = []
-    test_losses = []
-
+    val_losses = []
+    
     for e in tqdm(range(epochs)):
 
         # first evaluating for comparison
@@ -95,34 +102,28 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
                 f.write(str(testmet))
                 f.write("\n")
         """
-
         
         
         train_loss = train_epoch(net, train_loader, loss_fn, optimizer)
-        test_loss = 0
+        val_loss = 0
         scheduler.step()
-        print("Saving model....")
         
-        if e%3==1:
-          with torch.no_grad():
-              test_loss, testmet = test_epoch(net, test_loader, loss_fn,use_net=True)
-        else:
-          test_loss = 0.0
-
+        with torch.no_grad():
+            val_loss = val_epoch(net, val_loader, loss_fn)
+        
         train_losses.append(train_loss)
-        test_losses.append(test_loss)
+        val_losses.append(val_loss)
         
-        #print("skipping testing cuz peak autism idk")
+        with open(basepath + "/results.txt","a") as f:
+            f.write("Epoch :"+str(e+1) + "\n" + str(val_losses))
+            f.write("\n")
         
-        if e%3==1:
-          with open(basepath + "/results.txt","a") as f:
-              f.write("Epoch :"+str(e+1) + "\n" + str(testmet))
-              f.write("\n")
-          
         print("OPed to txt")
         
-        torch.save(net.state_dict(), basepath +'/Weights/dc20_model_'+str(e+1)+'.pth')
-        torch.save(optimizer.state_dict(), basepath+'/Weights/dc20_opt_'+str(e+1)+'.pth')
+        print("Saving model....")
+        
+        torch.save(net.state_dict(), basepath +'\Weights\dc20_model_'+str(e+1)+'.pth')
+        torch.save(optimizer.state_dict(), basepath+'\Weights\dc20_opt_'+str(e+1)+'.pth')
         
         print("Models saved")
 
@@ -133,4 +134,6 @@ def train(net, train_loader, test_loader, loss_fn, optimizer, scheduler, epochs)
         #print("Epoch: {}/{}...".format(e+1, epochs),
         #              "Loss: {:.6f}...".format(train_loss),
         #              "Test Loss: {:.6f}".format(test_loss))
-    return train_loss, test_loss
+    return train_loss, val_loss
+
+

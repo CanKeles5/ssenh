@@ -5,10 +5,13 @@ import torchaudio
 import torch
 import numpy as np
 import glob
+from scipy import signal
+
 
 SAMPLE_RATE = 16000
 N_FFT = (SAMPLE_RATE * 64) // 1000 
 HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
+
 
 class SpeechDataset(Dataset):
     """
@@ -31,7 +34,6 @@ class SpeechDataset(Dataset):
         self.max_len = 165000
         
         self.task = task
-
     
     def __len__(self):
         return self.len_
@@ -49,20 +51,23 @@ class SpeechDataset(Dataset):
         x_clean = self._prepare_sample(x_clean)
         x_noisy = self._prepare_sample(x_noisy)
         
-        """
-        if self.task == "upsample":
-            pass
+        if self.task == "enhancement":
+            x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
         elif self.task == "denoise":
-            pass
-        elif self.task == "fif":
-            pass
-        """
+            rand_vec = torch.add(torch.rand(x_clean.shape)*2, -1)/10
+            x_noisy = torch.add(x_clean.clone(), rand_vec)
+            x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
+        elif self.task == "upsample":
+            audio_8khz = signal.resample(x_clean, int(x_clean.shape[0]/SAMPLE_RATE*8000))
+            x_noisy_stft = torch.stft(input=torch.from_numpy(audio_8khz), n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
         
         # Short-time Fourier transform
-        x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, 
-                                  hop_length=self.hop_length, normalized=True)
-        x_clean_stft = torch.stft(input=x_clean, n_fft=self.n_fft, 
-                                  hop_length=self.hop_length, normalized=True)
+        x_clean_stft = torch.stft(input=x_clean, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
+        
+        
+        print(f"Task {self.task}.")
+        print(f"x_noisy_stft.shape: {x_noisy_stft.shape}")
+        print(f"x_clean_stft.shape: {x_clean_stft.shape}")
         
         return x_noisy_stft, x_clean_stft
         
@@ -77,7 +82,7 @@ class SpeechDataset(Dataset):
         return output
 
 
-def create_dataloader(input_folder, target_folder):
+def create_dataloader(input_folder, target_folder, task="enhancement"):
     INPUT_PATHS = glob.glob(input_folder + "\*.wav")
     TARGET_PATHS = glob.glob(target_folder + "\*.wav")
     
@@ -86,7 +91,7 @@ def create_dataloader(input_folder, target_folder):
     
     print("No. of Training files: ",len(input_files))
     
-    dataset = SpeechDataset(input_files, target_files, n_fft=64, hop_length=16)
+    dataset = SpeechDataset(input_files, target_files, n_fft=64, hop_length=16, task=task)
     
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
     

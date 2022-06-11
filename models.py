@@ -5,8 +5,8 @@ import torch
 import torch.nn as nn
 
 SAMPLE_RATE = 16000
-N_FFT = (SAMPLE_RATE * 64) // 1000 
-HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
+N_FFT = (SAMPLE_RATE * 64) // 1000
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000
 
 """### Declaring the class layers ###"""
 
@@ -231,6 +231,8 @@ class DCUnetA2A(nn.Module):
     
     
     def forward(self, x, is_istft=True):
+        orig_x = x.clone()
+        
         xs = []
         for i, encoder in enumerate(self.encoders):
             xs.append(x)
@@ -242,25 +244,23 @@ class DCUnetA2A(nn.Module):
             p = decoder(p)
             if i == self.model_length - 1:
                 break
-            #print(f"Decoder layer {i} : {p.shape}")
-            zeros_cat = torch.zeros(xs[self.model_length - 1 - i].shape).to(self.DEVICE)
-            #p = torch.cat([p, xs[self.model_length - 1 - i]], dim=1)
-            p = torch.cat([p, zeros_cat], dim=1)
-            del zeros_cat
+            
+            p = torch.cat([p, xs[self.model_length - 1 - i]], dim=1)
         
         # u9 - the mask
         
-        #mask = p
+        task = "mask"
         
-        # print('mask : ', mask.shape)
+        mask = p
         
-        #output = mask * orig_x
-        #output = torch.squeeze(output, 1)
-
-        output = p
+        if task == "mask":
+            output = mask * orig_x
+        elif task == "a2a":
+            output = p
+        
         output = torch.squeeze(output, 1)
-
-        print(f"istft parameters: {self.n_fft}, {self.hop_length}")
+        
+        #print(f"istft parameters: {self.n_fft}, {self.hop_length}")
 
         if is_istft:
             output = torch.istft(output, n_fft=N_FFT, hop_length=HOP_LENGTH, normalized=True)
@@ -275,109 +275,46 @@ class DCUnetA2A(nn.Module):
                                  model_complexity,
                                  model_complexity,
                                  model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #128
                                  ]
-
+            
             self.enc_kernel_sizes = [(7, 1),
                                      (1, 7),
                                      (6, 4),
-                                     #(7, 5),
-                                     #(5, 3),
-                                     #(5, 3),
-                                     #(5, 3),
-                                     #(5, 3),
-                                     #(5, 3),
-                                     #(5, 3)
                                      ]
 
             self.enc_strides = [(1, 1),
                                 (1, 1),
                                 (2, 2),
-                                #(2, 1),
-                                #(2, 2),
-                                #(2, 1),
-                                #(2, 2),
-                                #(2, 1),
-                                #(2, 2),
-                                #(2, 1)
                                 ]
 
             self.enc_paddings = [(3, 0),
                                  (0, 3),
                                  (0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0)
                                  ]
 
             self.dec_channels = [
                                  0,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
-                                 #model_complexity * 2,
                                  model_complexity,
                                  model_complexity,
                                  1
                                  ]
 
             self.dec_kernel_sizes = [
-                                     #(6, 3), 
-                                     #(6, 3),
-                                     #(6, 3),
-                                     #(6, 4),
-                                     #(6, 3),
-                                     #(6, 3),
-                                     #(8, 5),
                                      (7, 5),
                                      (1, 7),
                                      (7, 1)]
 
             self.dec_strides = [
-                                #(2, 1), #
-                                #(2, 2), #
-                                #(2, 1), #
-                                #(2, 2), #
-                                #(2, 1), #
-                                #(2, 2), #
-                                #(2, 1), #
-                                (2, 2), #
+                                (2, 2),
                                 (1, 1),
                                 (1, 1)]
 
             self.dec_paddings = [
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
-                                 #(0, 0),
                                  (0, 0),
                                  (0, 3),
                                  (3, 0)]
             
             self.dec_output_padding = [
-                                       #(0,0),
-                                       #(0,0),
-                                       #(0,0),
-                                       #(0,0),
-                                       #(0,0),
-                                       #(0,0),
-                                       #(0,0),
                                        (0,0),
                                        (0,0),
                                        (0,0)]

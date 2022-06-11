@@ -34,7 +34,7 @@ from matplotlib import colors, pyplot as plt
 import models
 import train
 import dataset
-
+import metrics
 
 np.random.seed(999)
 torch.manual_seed(999)
@@ -80,41 +80,30 @@ test_loader_single_unshuffled = test_loader
 gc.collect()
 torch.cuda.empty_cache()
 
-dcunet20 = models.DCUnetCanA2A(N_FFT, HOP_LENGTH, DEVICE=DEVICE).to(DEVICE)
+dcunet20 = models.DCUnetA2A(N_FFT, HOP_LENGTH, DEVICE=DEVICE).to(DEVICE)
 optimizer = torch.optim.Adam(dcunet20.parameters())
 
-#model_checkpoint = torch.load("/content/dc20_model_2.pth")
-#opt_checkpoint = torch.load("/content/dc20_opt_2.pth")
-#dcunet20.load_state_dict(model_checkpoint)
-#optimizer.load_state_dict(opt_checkpoint)
-
-loss_fn = wsdr_fn
+loss_fn = metrics.wsdr_fn
 scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
 
 print(f"number of parameters: {utils.count_parameters(dcunet20)}")
 
-# specify paths and uncomment to resume training from a given point
-# model_checkpoint = torch.load(path_to_model)
-# opt_checkpoint = torch.load(path_to_opt)
-# dcunet20.load_state_dict(model_checkpoint)
-# optimizer.load_state_dict(opt_checkpoint)
+basepath = r"C:\Users\Can\Desktop\ssenh\white_Noise2Noise"
 
-basepath = "/content/white_Noise2Noise"
-
-train_losses, test_losses = train.train(dcunet20, train_loader, test_loader, loss_fn, optimizer, scheduler, 4)
+train_losses, test_losses = train.train(dcunet20, train_loader, test_loader, loss_fn, optimizer, scheduler, 1)
 
 """## Using pretrained weights to run denoising inference ##
 
 #### Select the model weight .pth file ####
 """
 
-model_weights_path = "/content/white_Noise2Noise/Weights/dc20_model_2.pth"
+model_weights_path = r"C:\Users\Can\Desktop\ssenh\white_Noise2Noise\Weights\dc20_model_1.pth"
 
-dcunet20 = DCUnetCanA2A(N_FFT, HOP_LENGTH).to('cuda:0')
+dcunet20 = models.DCUnetA2A(N_FFT, HOP_LENGTH).to('cpu')
 optimizer = torch.optim.Adam(dcunet20.parameters())
 
 checkpoint = torch.load(model_weights_path,
-                        map_location=torch.device('cuda:0')
+                        map_location=torch.device('cpu')
                        )
 
 """#### Select the testing audio folders for inference ####"""

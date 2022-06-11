@@ -6,6 +6,13 @@ from scipy.linalg import solve_toeplitz,toeplitz
 #import pesq as pypesq
 from pystoi import stoi
 import random
+import torch
+
+SAMPLE_RATE = 16000
+N_FFT = (SAMPLE_RATE * 64) // 1000 
+HOP_LENGTH = (SAMPLE_RATE * 16) // 1000 
+
+DEVICE = "cpu"
 
 # Expected input, 2 numpy arrays, one for the reference clean audio, the other for the degraded audio, and sampling rate (should be same)
 # The way we'd use these metrics would be to compute the values on clean compared to noisy and then clean compared to our denoising results
