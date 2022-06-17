@@ -1,8 +1,3 @@
-'''
-This file has all the required signal processing helper methods
-I have no idea what half of this stuff is but hey why reinvent the wheel
-Mostly taken from https://github.com/schmiph2/pysepm
-'''
 
 from scipy.linalg import solve_toeplitz,toeplitz
 from scipy import interpolate

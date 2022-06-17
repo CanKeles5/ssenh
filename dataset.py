@@ -43,6 +43,9 @@ class SpeechDataset(Dataset):
         return waveform
   
     def __getitem__(self, index):
+        
+        print(f"self.task: {self.task}")
+        
         # load to tensors and normalization
         x_clean = self.load_sample(self.clean_files[index])
         x_noisy = self.load_sample(self.noisy_files[index])
@@ -53,21 +56,26 @@ class SpeechDataset(Dataset):
         
         if self.task == "enhancement":
             x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
+            
         elif self.task == "denoise":
             rand_vec = torch.add(torch.rand(x_clean.shape)*2, -1)/10
             x_noisy = torch.add(x_clean.clone(), rand_vec)
             x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
+            
         elif self.task == "upsample":
-            audio_8khz = signal.resample(x_clean, int(x_clean.shape[0]/SAMPLE_RATE*8000))
-            x_noisy_stft = torch.stft(input=torch.from_numpy(audio_8khz), n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
+            print(f"in upsample/dataset")
+            #audio_8khz = signal.resample(x_clean[0], int(x_clean.shape[1]/SAMPLE_RATE*8000))
+            audio_8khz = signal.decimate(x_clean[0], 2) #Apply anti-alising filter and downsample the signal
+            
+            x_noisy_stft = torch.stft(input=torch.from_numpy(np.expand_dims(audio_8khz.copy(), axis=0)), n_fft=self.n_fft, hop_length=self.hop_length // 2, normalized=True)
+        
         
         # Short-time Fourier transform
         x_clean_stft = torch.stft(input=x_clean, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
         
-        
-        print(f"Task {self.task}.")
-        print(f"x_noisy_stft.shape: {x_noisy_stft.shape}")
-        print(f"x_clean_stft.shape: {x_clean_stft.shape}")
+        #print(f"Task {self.task}.")
+        #print(f"x_noisy_stft.shape: {x_noisy_stft.shape}")
+        #print(f"x_clean_stft.shape: {x_clean_stft.shape}")
         
         return x_noisy_stft, x_clean_stft
         
