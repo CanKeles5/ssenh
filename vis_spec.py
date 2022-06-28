@@ -3,15 +3,14 @@
 # Importing libraries using import keyword.
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 from scipy.io import wavfile
 from scipy import signal
 import torch
+import matplotlib.pyplot as plot
+from scipy.io import wavfile
 
 
 file = r"C:\Users\Can\Desktop\dummy_data\male\eng5-male0.wav"
-
-
 
 
 SAMPLE_RATE = 8000
@@ -30,13 +29,6 @@ sr2, audio_16khz = wavfile.read(file)
 spec_16khz = torch.stft(input=torch.from_numpy(audio_16khz).unsqueeze(0).type(torch.FloatTensor), n_fft=N_FFT_16khz, hop_length=HOP_LENGTH_16khz, normalized=True)
 print(f"spec_16khz.shape: {spec_16khz.shape}")
 
-
-#import the pyplot and wavfile modules 
-
-import matplotlib.pyplot as plot
-
-from scipy.io import wavfile
-
  
 
 # Read the wav file (mono)
@@ -45,14 +37,14 @@ from scipy.io import wavfile
 
 # Plot the signal read from wav file
 plot.subplot(211)
-plot.plot(audio_8khz[0:200])
-#plot.specgram(audio_8khz[0:8000], Fs=8000) #,Fs=16000)
+#plot.plot(audio_8khz[0:100])
+plot.specgram(audio_8khz[0:8000], Fs=8000) #,Fs=16000)
 plot.xlabel('Time')
 plot.ylabel('Frequency')
 
 plot.subplot(212)
-plot.plot(audio_16khz[0:400])
-#plot.specgram(audio_16khz[0:16000], Fs=16000) #,Fs=16000)
+#plot.plot(audio_16khz[0:200])
+plot.specgram(audio_16khz[0:16000], Fs=16000) #,Fs=16000)
 plot.xlabel('Time')
 plot.ylabel('Frequency')
 plot.show()

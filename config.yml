@@ -1,6 +1,6 @@
 #Config file
 
-task: upsample #can be: senh, gaussian denoise, sr
+task: denoise #can be: senh, gaussian denoise, sr
 
 stage: train
 

@@ -32,11 +32,11 @@ if __name__ == "__main__":
     loss_fn = metrics.wsdr_fn
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.1)
     
-    print(f"number of parameters: {utils.count_parameters(dcunet20)}")
+    print(f"Number of parameters: {utils.count_parameters(dcunet20)}")
     
     #basepath = r"C:\Users\Can\Desktop\ssenh\white_Noise2Noise"
     
     train_losses, test_losses = train.train(dcunet20, train_loader, val_loader, loss_fn, optimizer, scheduler, 1)
     
-    
+
 

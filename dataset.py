@@ -6,6 +6,10 @@ import torch
 import numpy as np
 import glob
 from scipy import signal
+import random
+import matplotlib.pyplot as plt
+
+random.seed(10)
 
 
 SAMPLE_RATE = 16000
@@ -37,11 +41,11 @@ class SpeechDataset(Dataset):
     
     def __len__(self):
         return self.len_
-      
+    
     def load_sample(self, file):
         waveform, _ = torchaudio.load(file)
         return waveform
-  
+    
     def __getitem__(self, index):
         
         print(f"self.task: {self.task}")
@@ -63,11 +67,11 @@ class SpeechDataset(Dataset):
             x_noisy_stft = torch.stft(input=x_noisy, n_fft=self.n_fft, hop_length=self.hop_length, normalized=True)
             
         elif self.task == "upsample":
-            print(f"in upsample/dataset")
-            #audio_8khz = signal.resample(x_clean[0], int(x_clean.shape[1]/SAMPLE_RATE*8000))
-            audio_8khz = signal.decimate(x_clean[0], 2) #Apply anti-alising filter and downsample the signal
+            audio_8khz = signal.decimate(x_clean[0], 2)
             
-            x_noisy_stft = torch.stft(input=torch.from_numpy(np.expand_dims(audio_8khz.copy(), axis=0)), n_fft=self.n_fft, hop_length=self.hop_length // 2, normalized=True)
+            x_noisy_stft = torch.stft(input=torch.from_numpy(np.expand_dims(audio_8khz.copy(), axis=0)), n_fft=self.n_fft // 2, hop_length=self.hop_length // 2, normalized=True)
+            zeros = torch.zeros(x_noisy_stft.shape[0], x_noisy_stft.shape[1]-1, x_noisy_stft.shape[2], x_noisy_stft.shape[3])
+            x_noisy_stft = torch.cat((zeros, x_noisy_stft), dim=1)
         
         
         # Short-time Fourier transform
@@ -90,16 +94,20 @@ class SpeechDataset(Dataset):
         return output
 
 
-def create_dataloader(input_folder, target_folder, task="enhancement"):
+def create_dataloader(input_folder, target_folder, task="enhancement", percentage=1.0):
     INPUT_PATHS = glob.glob(input_folder + "\*.wav")
     TARGET_PATHS = glob.glob(target_folder + "\*.wav")
+    
+    if percentage != 1.0:
+        INPUT_PATHS = random.sample(INPUT_PATHS, int(percentage*len(INPUT_PATHS)))
+        TARGET_PATHS = random.sample(TARGET_PATHS, int(percentage*len(TARGET_PATHS)))
     
     input_files = sorted(list(INPUT_PATHS))
     target_files = sorted(list(TARGET_PATHS))
     
-    print("No. of Training files: ",len(input_files))
+    print("Number of Training files: ",len(input_files))
     
-    dataset = SpeechDataset(input_files, target_files, n_fft=64, hop_length=16, task=task)
+    dataset = SpeechDataset(input_files, target_files, n_fft=N_FFT, hop_length=HOP_LENGTH, task=task)
     
     dataloader = DataLoader(dataset, batch_size=1, shuffle=True)
     
