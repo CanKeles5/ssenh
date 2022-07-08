@@ -135,6 +135,9 @@ def train(net, train_loader, val_loader, loss_fn, optimizer, scheduler, epochs):
         #print("Epoch: {}/{}...".format(e+1, epochs),
         #              "Loss: {:.6f}...".format(train_loss),
         #              "Test Loss: {:.6f}".format(test_loss))
+        
+        print(f"Epoch {e} : Train loss = {train_loss}, Validation loss = {val_loss}")
+    
     return train_loss, val_loss
 
 
